@@ -24,9 +24,9 @@ Zone format is a comma delimited set of:
 You can also set via envrionment variables:
 
 
-`TZ_ZONES`
+`TZ_ZONES="UTC,America/New_York:Matt:8:17,America/Los_Angeles:Jack:8:17"`
 
 
-`TZ_24`
+`TZ_24=true`
 
 
