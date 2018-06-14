@@ -30,5 +30,5 @@ You can also set via envrionment variables:
 `TZ_24=true`
 
 
-(https://raw.githubusercontent.com/mmcquillan/tz/master/example.png)
+![example](https://raw.githubusercontent.com/mmcquillan/tz/master/example.png)
 
