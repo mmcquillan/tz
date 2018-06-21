@@ -33,10 +33,10 @@ func main() {
 	var zones []zone
 
 	// capture input
-	match, _, values := matcher.Matcher("<bin> [zones] [--24]", strings.Join(os.Args, " "))
+	match, _, values := matcher.Matcher("<bin> [zones] [--date] [--24]", strings.Join(os.Args, " "))
 	if !match || values["zones"] == "help" {
 		fmt.Println("tz list")
-		fmt.Println("tz [zones] [--24]")
+		fmt.Println("tz [zones] [--date] [--24]")
 		fmt.Println("")
 		fmt.Println("examples:")
 		fmt.Println("  tz UTC")
@@ -49,12 +49,18 @@ func main() {
 	}
 
 	// set 24
-	block := 7
+	block := 8
 	format := "hha"
 	if os.Getenv("TZ_24") == "true" || values["24"] == "true" {
-		block = 5
+		block = 6
 		format = "H"
 	}
+
+        // set date
+        date := false
+        if os.Getenv("TZ_DATE") == "true" || values["date"] == "true" {
+                date = true
+        }
 
 	// set zones
 	if os.Getenv("TZ_ZONES") != "" {
@@ -102,7 +108,11 @@ func main() {
 			for i := -half + 1; i <= half; i++ {
 				t := n.Add(time.Second * time.Duration((i*3600)+offset))
 				if i == 0 {
-					now.Printf(" %s ", t.Format(joda.Format(format)))
+					if date{
+						now.Printf(" %s - %s ", t.Format(joda.Format("MM/dd")), t.Format(joda.Format(format)))
+					} else {
+						now.Printf(" %s ", t.Format(joda.Format(format)))
+					}
 				} else if t.Hour() >= z.start && t.Hour() <= z.end {
 					active.Printf(" %s ", t.Format(joda.Format(format)))
 				} else {
