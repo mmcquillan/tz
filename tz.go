@@ -57,12 +57,12 @@ func main() {
 	}
 
 	// set zones
-	if os.Getenv("TZ_ZONES") != "" {
+	if values["zones"] != "" {
+                for _, tz := range strings.Split(values["zones"], ",") {
+                        zones = append(zones, splitInput(tz))
+                }
+	} else if os.Getenv("TZ_ZONES") != "" {
 		for _, tz := range strings.Split(os.Getenv("TZ_ZONES"), ",") {
-			zones = append(zones, splitInput(tz))
-		}
-	} else if values["zones"] != "" {
-		for _, tz := range strings.Split(values["zones"], ",") {
 			zones = append(zones, splitInput(tz))
 		}
 	} else {
