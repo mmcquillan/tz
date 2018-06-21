@@ -168,9 +168,19 @@ func findOffset(tz string) (offset int, match bool) {
 	offset = 0
 	match = false
 
-	// cleanup
-	if strings.ToUpper(tz) == "LOCAL" {
+	// shorthand timezones
+	tz_shorthand := strings.ToUpper(tz)
+	switch tz_shorthand {
+	case "LOCAL":
 		tz = "Local"
+	case "EASTERN":
+		tz = "America/New_York"
+	case "CENTRAL":
+		tz = "America/Chicago"
+	case "MOUNTAIN":
+		tz = "America/Denver"
+	case "PACIFIC":
+		tz = "America/Los_Angeles"
 	}
 
 	// first, std timezone lib
