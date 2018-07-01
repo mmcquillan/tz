@@ -157,6 +157,11 @@ func splitInput(input string) (z zone) {
 		}
 	}
 
+	// handle empty name
+	if z.name == "" {
+		z.name = z.tz
+	}
+
 	// return
 	return z
 
