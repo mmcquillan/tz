@@ -4,7 +4,7 @@ This is a simple timezone visualizer.
 
 ```
 tz list
-tz [zones] [--24]
+tz [zones] [--date] [--24]
 
 examples:
   tz UTC
@@ -28,6 +28,9 @@ You can also set via envrionment variables:
 
 
 `TZ_24=true`
+
+
+`TZ_DATE=true`
 
 
 ![example](https://raw.githubusercontent.com/mmcquillan/tz/master/example.png)
