@@ -95,6 +95,7 @@ func main() {
 	active := color.New(color.BgGreen)
 	now := color.New(color.BgBlue)
 	nope := color.New(color.BgRed)
+	info := color.New(color.FgRed)
 
 	// set time
 	n := time.Now().UTC()
@@ -104,7 +105,11 @@ func main() {
 	for _, z := range zones {
 		offset, match := findOffset(z.tz)
 		if match {
-			fmt.Printf(" %s%s ", strings.Repeat(" ", name-len(z.name)), z.name)
+			if z.highlight {
+				info.Printf(" %s%s ", strings.Repeat(" ", name-len(z.name)), z.name)
+			} else {
+				fmt.Printf(" %s%s ", strings.Repeat(" ", name-len(z.name)), z.name)
+			}
 			for i := -half + 1; i <= half; i++ {
 				t := n.Add(time.Second * time.Duration((i*3600)+offset))
 				if i == 0 {
@@ -136,10 +141,11 @@ func splitInput(input string) (z zone) {
 
 	// default
 	z = zone{
-		tz:    input,
-		name:  input,
-		start: 25,
-		end:   25,
+		tz:        input,
+		name:      input,
+		start:     25,
+		end:       25,
+		highlight: false,
 	}
 
 	// do we split
@@ -167,9 +173,9 @@ func splitInput(input string) (z zone) {
 		}
 	}
 
-	// handle empty name
-	if z.name == "" {
-		z.name = z.tz
+	if strings.HasPrefix(z.name, "@") {
+		z.name = strings.Replace(z.name, "@", "", -1)
+		z.highlight = true
 	}
 
 	// return
@@ -219,8 +225,9 @@ func findOffset(tz string) (offset int, match bool) {
 }
 
 type zone struct {
-	tz    string
-	name  string
-	start int
-	end   int
+	tz        string
+	name      string
+	start     int
+	end       int
+	highlight bool
 }
