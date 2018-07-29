@@ -2,16 +2,20 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/mitchellh/go-homedir"
 	"github.com/mmcquillan/joda"
 	"github.com/mmcquillan/matcher"
 	"github.com/tkuchiki/go-timezone"
 	terminal "github.com/wayneashleyberry/terminal-dimensions"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
@@ -30,7 +34,7 @@ func main() {
 	}
 
 	// init zones
-	var zones []zone
+	var zones []Zone
 
 	// capture input
 	match, _, values := matcher.Matcher("<bin> [zones] [--date] [--24]", strings.Join(os.Args, " "))
@@ -56,17 +60,30 @@ func main() {
 		format = "H"
 	}
 
-        // set date
-        date := false
-        if os.Getenv("TZ_DATE") == "true" || values["date"] == "true" {
-                date = true
-        }
+	// set date
+	date := false
+	if os.Getenv("TZ_DATE") == "true" || values["date"] == "true" {
+		date = true
+	}
+
+	// users file
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Println("ERROR: No home dir - " + err.Error())
+	}
+	file := path.Join(home, ".tz")
 
 	// set zones
 	if values["zones"] != "" {
-                for _, tz := range strings.Split(values["zones"], ",") {
-                        zones = append(zones, splitInput(tz))
-                }
+		for _, tz := range strings.Split(values["zones"], ",") {
+			zones = append(zones, splitInput(tz))
+		}
+	} else if _, err := os.Stat(file); err == nil {
+		tzFile, err := ioutil.ReadFile(file)
+		err = yaml.Unmarshal([]byte(tzFile), &zones)
+		if err != nil {
+			fmt.Println("ERROR: Unmarshal error - " + err.Error())
+		}
 	} else if os.Getenv("TZ_ZONES") != "" {
 		for _, tz := range strings.Split(os.Getenv("TZ_ZONES"), ",") {
 			zones = append(zones, splitInput(tz))
@@ -78,9 +95,12 @@ func main() {
 
 	// max name
 	name := 0
-	for _, z := range zones {
-		if len(z.name) > name {
-			name = len(z.name)
+	for i, z := range zones {
+		if z.Name == "" {
+			zones[i].Name = z.TZ
+		}
+		if len(z.Name) > name {
+			name = len(z.Name)
 		}
 	}
 
@@ -103,22 +123,22 @@ func main() {
 	// output
 	fmt.Printf("\n")
 	for _, z := range zones {
-		offset, match := findOffset(z.tz)
+		offset, match := findOffset(z.TZ)
 		if match {
-			if z.highlight {
-				info.Printf(" %s%s ", strings.Repeat(" ", name-len(z.name)), z.name)
+			if z.Highlight {
+				info.Printf(" %s%s ", strings.Repeat(" ", name-len(z.Name)), z.Name)
 			} else {
-				fmt.Printf(" %s%s ", strings.Repeat(" ", name-len(z.name)), z.name)
+				fmt.Printf(" %s%s ", strings.Repeat(" ", name-len(z.Name)), z.Name)
 			}
 			for i := -half + 1; i <= half; i++ {
 				t := n.Add(time.Second * time.Duration((i*3600)+offset))
 				if i == 0 {
-					if date{
+					if date {
 						now.Printf(" %s - %s ", t.Format(joda.Format("MM/dd")), t.Format(joda.Format(format)))
 					} else {
 						now.Printf(" %s ", t.Format(joda.Format(format)))
 					}
-				} else if t.Hour() >= z.start && t.Hour() <= z.end {
+				} else if t.Hour() >= z.Start && t.Hour() <= z.End {
 					active.Printf(" %s ", t.Format(joda.Format(format)))
 				} else {
 					inactive.Printf(" %s ", t.Format(joda.Format(format)))
@@ -126,26 +146,26 @@ func main() {
 				fmt.Printf(" ")
 			}
 		} else {
-			fmt.Printf(" %s%s ", strings.Repeat(" ", name-len(z.name)), z.name)
-			nope.Printf(" Cannot find timezone: %s ", z.tz)
+			fmt.Printf(" %s%s ", strings.Repeat(" ", name-len(z.Name)), z.Name)
+			nope.Printf(" Cannot find timezone: %s ", z.TZ)
 		}
 		fmt.Printf("\n\n")
 	}
 
 }
 
-func splitInput(input string) (z zone) {
+func splitInput(input string) (z Zone) {
 
 	// cleanup
 	input = strings.TrimSpace(input)
 
 	// default
-	z = zone{
-		tz:        input,
-		name:      input,
-		start:     25,
-		end:       25,
-		highlight: false,
+	z = Zone{
+		TZ:        input,
+		Name:      input,
+		Start:     25,
+		End:       25,
+		Highlight: false,
 	}
 
 	// do we split
@@ -153,29 +173,29 @@ func splitInput(input string) (z zone) {
 		p := strings.Split(input, ":")
 		switch len(p) {
 		case 2:
-			z.tz = strings.TrimSpace(p[0])
-			z.name = strings.TrimSpace(p[1])
+			z.TZ = strings.TrimSpace(p[0])
+			z.Name = strings.TrimSpace(p[1])
 		case 3:
-			z.tz = strings.TrimSpace(p[0])
-			z.name = strings.TrimSpace(p[1])
+			z.TZ = strings.TrimSpace(p[0])
+			z.Name = strings.TrimSpace(p[1])
 			if val, err := strconv.ParseInt(p[2], 10, 32); err == nil {
-				z.start = int(val)
+				z.Start = int(val)
 			}
 		case 4:
-			z.tz = strings.TrimSpace(p[0])
-			z.name = strings.TrimSpace(p[1])
+			z.TZ = strings.TrimSpace(p[0])
+			z.Name = strings.TrimSpace(p[1])
 			if val, err := strconv.ParseInt(p[2], 10, 32); err == nil {
-				z.start = int(val)
+				z.Start = int(val)
 			}
 			if val, err := strconv.ParseInt(p[3], 10, 32); err == nil {
-				z.end = int(val)
+				z.End = int(val)
 			}
 		}
 	}
 
-	if strings.HasPrefix(z.name, "@") {
-		z.name = strings.Replace(z.name, "@", "", -1)
-		z.highlight = true
+	if strings.HasPrefix(z.Name, "@") {
+		z.Name = strings.Replace(z.Name, "@", "", -1)
+		z.Highlight = true
 	}
 
 	// return
@@ -190,8 +210,8 @@ func findOffset(tz string) (offset int, match bool) {
 	match = false
 
 	// shorthand timezones
-	tz_shorthand := strings.ToUpper(tz)
-	switch tz_shorthand {
+	tzShorthand := strings.ToUpper(tz)
+	switch tzShorthand {
 	case "LOCAL":
 		tz = "Local"
 	case "EASTERN":
@@ -224,10 +244,10 @@ func findOffset(tz string) (offset int, match bool) {
 	return offset, match
 }
 
-type zone struct {
-	tz        string
-	name      string
-	start     int
-	end       int
-	highlight bool
+type Zone struct {
+	TZ        string `yaml:"tz"`
+	Name      string `yaml:"name"`
+	Start     int    `yaml:"start"`
+	End       int    `yaml:"end"`
+	Highlight bool   `yaml:"highlight"`
 }

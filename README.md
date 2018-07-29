@@ -21,6 +21,21 @@ Zone format is a comma delimited set of:
 <timezone>[:name][:start time][:end time]
 ```
 
+You can set zones in your home director `~/.tz`:
+
+```
+- tz: "UTC"
+- tz: "local"
+  name: "Matt"
+  start: 8
+  end: 17
+- tz: "America/Los_Angeles"
+  name: "Jack"
+  start: 8
+  end: 17
+```
+
+
 You can also set via envrionment variables:
 
 
