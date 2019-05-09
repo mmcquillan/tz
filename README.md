@@ -1,7 +1,12 @@
-# tz
+# tz - A simple CLI timezone visualizer.
 
-This is a simple timezone visualizer.
+#### Installation
 
+```bash
+go get "github.com/mmcquillan/tz"
+```
+
+#### Usage
 ```
 tz list
 tz [zones] [--date] [--24]
